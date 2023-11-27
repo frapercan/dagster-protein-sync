@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 @asset
 def cargar_codigos():
     """Carga códigos de acceso de UniProt."""
-    config = read_yaml_config("./config.yaml")
+    config = read_yaml_config("../config/config.yaml")
     database_uri = (f"postgresql+psycopg2://{config['DB_USERNAME']}:"
                     f"{config['DB_PASSWORD']}"
                     f"@{config['DB_HOST']}:"
@@ -30,7 +30,7 @@ def cargar_codigos():
 @asset(deps=[cargar_codigos])
 def procesar_datos_uniprot():
     """Procesa datos de UniProt."""
-    config = read_yaml_config("./config.yaml")
+    config = read_yaml_config("../config/config.yaml")
     database_uri = (f"postgresql+psycopg2://{config['DB_USERNAME']}:"
                     f"{config['DB_PASSWORD']}"
                     f"@{config['DB_HOST']}:"
