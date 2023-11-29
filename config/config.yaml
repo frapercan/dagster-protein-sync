@@ -1,0 +1,13 @@
+DB_USERNAME: usuario
+DB_PASSWORD: clave
+DB_HOST: docker_postgresql_protein
+DB_PORT: 5432
+DB_NAME: BioData
+
+criterio_busqueda: '(structure_3d:true) AND (reviewed:true)'
+limit: 10
+
+server: "https://files.wwpdb.org/"
+pdb: "/opt/data"
+file_format: "mmCif"
+
