@@ -2,6 +2,3 @@ dagster
 dagster-webserver
 dagster-docker
 dagster_postgres
-protein-data-handler
-sqlalchemy
-pandas

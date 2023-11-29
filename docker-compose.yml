@@ -1,9 +1,25 @@
 version: "3.7"
 
 services:
-  docker_example_postgresql:
+  docker_postgresql:
     image: postgres:11
-    container_name: docker_example_postgresql
+    container_name: docker_postgresql
+    environment:
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_DAGSTER_NAME}"
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DAGSTER_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - docker_network
+
+  docker_postgresql_protein:
+    image: postgres:11
+    container_name: docker_postgresql_protein
     environment:
       POSTGRES_USER: "${DB_USERNAME}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
@@ -19,24 +35,26 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - docker_example_network
+      - docker_network
 
-  docker_example_user_code:
+  docker_user_code:
     build:
       context: .
       dockerfile: ./Dockerfile_user_code
-    container_name: docker_example_user_code
-    image: docker_example_user_code_image
+    container_name: docker_user_code
+    image: docker_user_code_image
     restart: always
     environment:
       DAGSTER_POSTGRES_USER: "${DB_USERNAME}"
       DAGSTER_POSTGRES_PASSWORD: "${DB_PASSWORD}"
-      DAGSTER_POSTGRES_DB: "${DB_NAME}"
-      DAGSTER_CURRENT_IMAGE: "docker_example_user_code_image"
+      DAGSTER_POSTGRES_DB: "${DB_DAGSTER_NAME}"
+      DAGSTER_CURRENT_IMAGE: "docker_user_code_image"
+    volumes:
+      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
     networks:
-      - docker_example_network
+      - docker_network
 
-  docker_example_webserver:
+  docker_webserver:
     build:
       context: .
       dockerfile: ./Dockerfile_dagster
@@ -48,7 +66,7 @@ services:
       - "3000"
       - -w
       - workspace.yaml
-    container_name: docker_example_webserver
+    container_name: docker_webserver
     expose:
       - "3000"
     ports:
@@ -56,42 +74,47 @@ services:
     environment:
       DAGSTER_POSTGRES_USER: "${DB_USERNAME}"
       DAGSTER_POSTGRES_PASSWORD: "${DB_PASSWORD}"
-      DAGSTER_POSTGRES_DB: "${DB_NAME}"
+      DAGSTER_POSTGRES_DB: "${DB_DAGSTER_NAME}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
     networks:
-      - docker_example_network
+      - docker_network
     depends_on:
-      - docker_example_postgresql
-      - docker_example_user_code
+      docker_postgresql:
+        condition: service_healthy
+      docker_user_code:
+        condition: service_started
 
-  docker_example_daemon:
+
+  docker_daemon:
     build:
       context: .
       dockerfile: ./Dockerfile_dagster
     entrypoint:
       - dagster-daemon
       - run
-    container_name: docker_example_daemon
+    container_name: docker_daemon
     restart: on-failure
     environment:
       DAGSTER_POSTGRES_USER: "${DB_USERNAME}"
       DAGSTER_POSTGRES_PASSWORD: "${DB_PASSWORD}"
-      DAGSTER_POSTGRES_DB: "${DB_NAME}"
+      DAGSTER_POSTGRES_DB: "${DB_DAGSTER_NAME}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
     networks:
-      - docker_example_network
+      - docker_network
     depends_on:
-      docker_example_postgresql:
+      docker_postgresql:
         condition: service_healthy
-      docker_example_user_code:
+      docker_user_code:
         condition: service_started
 
 
 networks:
-  docker_example_network:
+  docker_network:
     driver: bridge
-    name: docker_example_network
+    name: docker_network

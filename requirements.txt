@@ -5,3 +5,4 @@ dagster_postgres
 protein-data-handler
 sqlalchemy
 pandas
+bio
