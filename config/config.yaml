@@ -8,6 +8,13 @@ criterio_busqueda: '(structure_3d:true) AND (reviewed:true)'
 limit: 10
 
 server: "https://files.wwpdb.org/"
-pdb: "/opt/data"
+pdb: /opt/data/PDB
 file_format: "mmCif"
 
+
+
+resolution_threshold: 2.5
+max_workers: 15
+data_dir: /opt/data/FASTA
+output_dir: /opt/data/FASTA/output
+merge_name: merge_25

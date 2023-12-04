@@ -20,6 +20,7 @@ run_launcher:
         - /var/run/docker.sock:/var/run/docker.sock
         - /tmp/io_manager_storage:/tmp/io_manager_storage
         - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
+        - "/media/frapercan/DATA 2/metamorphisms/dagster_home:/opt/dagster/dagster_home"
 
 run_storage:
   module: dagster_postgres.run_storage
@@ -62,3 +63,10 @@ event_log_storage:
       db_name:
         env: DAGSTER_POSTGRES_DB
       port: 5432
+
+
+compute_logs:
+  module: dagster.core.storage.local_compute_log_manager
+  class: LocalComputeLogManager
+  config:
+    base_dir: /opt/dagster/dagster_home
