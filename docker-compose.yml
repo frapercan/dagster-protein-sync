@@ -50,8 +50,8 @@ services:
       DAGSTER_POSTGRES_DB: "${DB_DAGSTER_NAME}"
       DAGSTER_CURRENT_IMAGE: "docker_user_code_image"
     volumes:
-      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
-      - "/media/frapercan/DATA 2/metamorphisms/dagster_home:/opt/dagster/dagster_home"
+      - "/home/xaxi/DATA/metamorphisms:/opt/data"
+      - "/home/xaxi/DATA/metamorphisms/dagster_home:/opt/dagster/dagster_home"
     networks:
       - docker_network
 
@@ -79,8 +79,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
-      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
-      - "/media/frapercan/DATA 2/metamorphisms/dagster_home:/opt/dagster/dagster_home"
+      - "/home/xaxi/DATA/metamorphisms:/opt/data"
+      - "/home/xaxi/dagster/dagster_home:/opt/dagster/dagster_home"
     networks:
       - docker_network
     depends_on:
@@ -106,8 +106,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
-      - "/media/frapercan/DATA 2/metamorphisms:/opt/data"
-      - "/media/frapercan/DATA 2/metamorphisms/dagster_home:/opt/dagster/dagster_home"
+      - "/home/xaxi/DATA/metamorphisms:/opt/data"
+      - "/home/xaxi/dagster/dagster_home:/opt/dagster/dagster_home"
     networks:
       - docker_network
     depends_on:

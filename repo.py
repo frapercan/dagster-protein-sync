@@ -1,5 +1,6 @@
 import logging
-from datetime import timedelta
+
+from protein_data_handler.alignment import UniProtPDBMapping
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dagster import op, job, ScheduleDefinition
@@ -27,7 +28,7 @@ def get_database_session():
 
 
 @op
-def cargar_codigos_op():
+def cargar_codigos_acceso_uniprot_op():
     """Carga códigos de acceso de UniProt."""
     session = get_database_session()
     config = read_yaml_config("./config/config.yaml")
@@ -35,50 +36,61 @@ def cargar_codigos_op():
 
 
 @op
-def procesar_datos_uniprot_op(cargar_codigos):
+def extraer_entradas_uniprot_op(cargar_codigos_acceso_uniprot_op):
     """Procesa datos de UniProt."""
     session = get_database_session()
     extraer_entradas(session=session)
 
 
 @op
-def descargar_pdb_op():
+def descargar_datos_completos_pdb_op():
     config = read_yaml_config("./config/config.yaml")
     server = config['server']
     pdb = config['pdb']
     file_format = config['file_format']
     download_entire_pdb(server, pdb, file_format)
 
-
-def initialize_fasta_handler(config):
-    session = get_database_session()
-    return FastaHandler(session, config['data_dir'], config['output_dir'])
-
-
 @op
-def descargar_mergear_fastas_op(procesar_datos_uniprot_op):
+def descargar_fusionar_alinear_fastas_op(extraer_entradas_uniprot_op):
     """
     Operación para descargar archivos FASTA.
     """
-    config = read_yaml_config("./config/config.yaml")
-    fasta_handler = initialize_fasta_handler(config)
-    logging.info("Descargando archivos FASTA...")
     session = get_database_session()
-    query = session.query(PDBReference).filter(PDBReference.resolution < config.get("resolution_threshold", 2.5)).all()
+    config = read_yaml_config("./config/config.yaml")
+    logging.info("Descargando archivos FASTA...")
+    query = session.query(PDBReference).filter(
+        PDBReference.resolution < config.get("resolution_threshold", 2.5)).all()
     pdb_ids = [pdb_ref.pdb_id for pdb_ref in query]
-    # Inicializa FastaHandler
     fasta_downloader = FastaHandler(session, config['data_dir'], config['output_dir'])
-
-    # Descarga los archivos FASTA
     fasta_downloader.download_fastas(pdb_ids, config['max_workers'])
-
     fasta_downloader.merge_fastas(pdb_ids, config['merge_name'])
+    fasta_downloader.cluster_fastas(config['merge_name'])
+
+    # Confirma las operaciones realizadas en esta sesión
+    session.commit()
+
+
+
+@op
+def alinear_secuencias_uniprot_pdb_op(descargar_fusionar_alinear_fastas_op):
+    """
+    Realiza el alineamiento de secuencias utilizando UniProtPDBMapping.
+    """
+    logging.info("Iniciando el proceso de alineamiento de secuencias...")
+    session = get_database_session()
+    mapping = UniProtPDBMapping(session)
+    pares = mapping.realizar_consulta_cadenas_iguales()
+    mapping.volcar_datos_alineamiento(pares)
 
 
 @job
 def protein_data_pipeline():
-    descargar_mergear_fastas_op(procesar_datos_uniprot_op(cargar_codigos_op()))
-    descargar_pdb_op()
+    alinear_secuencias_uniprot_pdb_op(descargar_fusionar_alinear_fastas_op(extraer_entradas_uniprot_op(cargar_codigos_acceso_uniprot_op())))
+    descargar_datos_completos_pdb_op()
+
+
+
+
 
 
 # Programar la ejecución del trabajo cada 8 días
